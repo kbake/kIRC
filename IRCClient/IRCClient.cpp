@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
   string server = "chat.freenode.net";
   string port   = "8000";
   string pass   = "none";
-  string nick   = "kb";
-  string user   = "irctest 8 * :irctest";
+  string nick   = "guest6545353";
+  string user   = "kIRC 8 * :kIRC";
   if( argc > 1 )
   {
     server = string(argv[1]);
@@ -63,8 +63,6 @@ int main(int argc, char* argv[])
     WSACleanup();
     return 1;
   }
-
-  //SOCKET connectSocket = INVALID_SOCKET;
 
   ptr = result;
 
@@ -150,26 +148,22 @@ int readMessage(SOCKET& connectedSocket)
   const int buf = 512;
   int ret;
 
-  string tempMessage;
+  string tempMessage = "";
   char recvBuf[buf];
-  memset(recvBuf, 0, buf);
 
   do
   {
+    memset(recvBuf, 0, buf);
     ret = recv(connectedSocket, recvBuf, buf, 0);
-    //printf("%d", ret);
-    if( ret < 1 )
+    if( ret > 0 )
     {
-      printf("recv failed: %d\n", WSAGetLastError());
-      isExiting = true;
+      // Parse message here
+      parseMessage(string(recvBuf), tempMessage);
     }
     else
     {
-      //printf("Bytes received: %d\n", ret);
-      //printf("%s", recvBuf);
-      
-      // Parse message here
-      parseMessage(string(recvBuf), tempMessage);
+      printf("recv failed: %d\n", WSAGetLastError());
+      isExiting = true;
     }
   } while( !isExiting );
 
@@ -182,19 +176,19 @@ void parseMessage(string& recievedMessage, string& tempMessage)
   int endIndex = recievedMessage.find("\r\n");
   while( endIndex != -1 )
   {
-    tempMessage += recievedMessage.substr(0, endIndex) + "\r\n";
-    //messages.push(tempMessage);
-    cout.write(tempMessage.c_str(), tempMessage.length());
+    tempMessage.append(recievedMessage.substr(0, endIndex));
+    
+    cout << tempMessage << endl;
+    tempMessage.clear();
     
     recievedMessage = recievedMessage.substr(endIndex + 2, recievedMessage.length());
-    tempMessage.clear();
     endIndex = recievedMessage.find("\r\n");
   }
 
   // If we have an uncompleted message, start building it up
   if( recievedMessage.length() > 0 )
   {
-    tempMessage += recievedMessage;
+    tempMessage.append(recievedMessage);
   }
 }
 
