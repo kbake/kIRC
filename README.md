@@ -1,0 +1,2 @@
+# kIRC
+Simple IRC client
