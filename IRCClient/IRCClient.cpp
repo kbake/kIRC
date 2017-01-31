@@ -154,7 +154,7 @@ int readMessage(SOCKET& connectedSocket)
   do
   {
     memset(recvBuf, 0, buf);
-    ret = recv(connectedSocket, recvBuf, buf, 0);
+    ret = recv(connectedSocket, recvBuf, buf-1, 0);
     if( ret > 0 )
     {
       // Parse message here
@@ -231,6 +231,11 @@ void parseInput(string& input)
         channel.insert(0, "#");
       sendMessage(connectSocket, join + channel);
       currentChannel = channel;
+    }
+    else if( command == "part" || command == "PART" )
+    {
+      sendMessage(connectSocket, "PART " + currentChannel);
+      currentChannel = "";
     }
   }
   // No command
