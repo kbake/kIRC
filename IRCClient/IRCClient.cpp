@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "IrcMessage.h"
 
 using namespace std;
 
@@ -10,7 +11,8 @@ int sendMessage(SOCKET& connectedSocket, string& message);
 int readMessage(SOCKET& connectedSocket);
 
 // Handling recieved/sent message parsing
-void parseMessage(string& recievedMessage, string& tempMessage);
+void parseMessage(const string& recievedMessage);
+void buildMessage(string& recievedMessage, string& tempMessage);
 void parseInput(string& command);
 
 SOCKET connectSocket = INVALID_SOCKET;
@@ -158,7 +160,7 @@ int readMessage(SOCKET& connectedSocket)
     if( ret > 0 )
     {
       // Parse message here
-      parseMessage(string(recvBuf), tempMessage);
+      buildMessage(string(recvBuf), tempMessage);
     }
     else
     {
@@ -170,7 +172,7 @@ int readMessage(SOCKET& connectedSocket)
   return ret;
 }
 
-void parseMessage(string& recievedMessage, string& tempMessage)
+void buildMessage(string& recievedMessage, string& tempMessage)
 {
   // do some parsing stuff (e.g. "PING PONG"/"PRIVMSG"/etc)
   int endIndex = recievedMessage.find("\r\n");
@@ -192,6 +194,31 @@ void parseMessage(string& recievedMessage, string& tempMessage)
   }
 }
 
+void parseMessage(const string& recievedMessage)
+{
+  IrcMessage message(recievedMessage);
+  std::string toPrint;
+
+  switch( message.GetCommandType() )
+  {
+  case IrcMessage::PING:
+    {
+      toPrint = "PONG :" + message.GetMessageString();
+    }
+    break;
+  case IrcMessage::PRVMSG:
+  case IrcMessage::NOTICE:
+  case IrcMessage::NONE:
+    {
+      toPrint = message.GetMessageString();
+    }
+    break;
+  }
+
+  if( toPrint.length() > 0 )
+    cout << toPrint << endl;
+}
+
 int sendMessage(SOCKET& connectedSocket, string& message)
 {
   message += "\r\n";
@@ -208,41 +235,44 @@ int sendMessage(SOCKET& connectedSocket, string& message)
 
 void parseInput(string& input)
 {
-  int commandIndex = input.find(":");
+  IrcMessage message(input);
+  std::string toSend;
 
-  // We have a command
-  if( commandIndex != -1 )
+  switch( message.GetCommandType() )
   {
-    // Grab the command
-    string command = input.substr(0, commandIndex);
-
-    // Figure out what is being asked and act accordingly
-    if( command == "q" || command == "Q" )
+  case IrcMessage::QUIT:
     {
-      sendMessage(connectSocket, string("QUIT"));
+      toSend = "QUIT";
       isExiting = true;
     }
-    else if( command == "join" || command == "JOIN" )
+    break;
+  case IrcMessage::JOIN:
     {
       // Grab channel name
-      string channel = input.substr(commandIndex + 1, input.length());
-      string join = "JOIN ";
+      toSend = "JOIN ";
+      string channel = message.GetMessageString();
       if( channel.find("#") == -1 )
         channel.insert(0, "#");
-      sendMessage(connectSocket, join + channel);
+      toSend += channel;
       currentChannel = channel;
     }
-    else if( command == "part" || command == "PART" )
+    break;
+  case IrcMessage::PART:
     {
-      sendMessage(connectSocket, "PART " + currentChannel);
+      toSend = "PART " + currentChannel;
       currentChannel = "";
     }
+    break;
+  case IrcMessage::PRVMSG:
+  case IrcMessage::NONE:
+    {
+      // Send the input as a message to wherever we're currently looking
+      if( currentChannel != "" && message.GetMessageString().length() > 0 )
+        toSend = "PRIVMSG " + currentChannel + " :" + message.GetMessageString();
+    }
+    break;
   }
-  // No command
-  else
-  {
-    // Send the input as a message to wherever we're currently looking
-    if( currentChannel != "" )
-      sendMessage(connectSocket, "PRIVMSG" + currentChannel + " :" + input);
-  }
+
+  if( toSend.length() > 0 )
+    sendMessage(connectSocket, toSend);
 }
