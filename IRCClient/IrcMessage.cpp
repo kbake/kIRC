@@ -15,16 +15,16 @@ IrcMessage::~IrcMessage()
 
 void IrcMessage::ConvertMessageToCommandMessage()
 {
-  int commandIndex = initialMessage_.find(":");
-  if( commandIndex != -1 )
+  if( initialMessage_.size() > 0 && initialMessage_.at(0) == '/' )
   {
-    commandMessage_.Command = GetCommandTypeFromString(initialMessage_.substr(0, commandIndex));
+    int spaceIndex = initialMessage_.find(" ");
+    commandMessage_.Command = GetCommandTypeFromString(initialMessage_.substr(1, spaceIndex-1));
 
     // If we didn't figure a specific command, just use the whole string as our message
     if( commandMessage_.Command == NONE )
       commandMessage_.Message = initialMessage_;
     else
-      commandMessage_.Message = initialMessage_.substr(commandIndex + 1, initialMessage_.length());
+      commandMessage_.Message = initialMessage_.substr(spaceIndex + 1, initialMessage_.length());
   }
   else
   {

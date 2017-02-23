@@ -263,6 +263,10 @@ void parseInput(string& input)
       currentChannel = "";
     }
     break;
+  case IrcMessage::PING:
+    {
+      toSend = "PONG " + message.GetMessageString();
+    }
   case IrcMessage::PRVMSG:
   case IrcMessage::NONE:
     {
