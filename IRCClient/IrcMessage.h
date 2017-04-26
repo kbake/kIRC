@@ -17,10 +17,10 @@ public:
     NONE
   };
 
-  const CommandType GetCommandType() const;
-  const std::string GetMessageString() const;
+  virtual const CommandType GetCommandType() const = 0;
+  virtual const std::string GetMessageString() const = 0;
 
-private:
+protected:
   struct CommandMessage
   {
     CommandMessage() : Command(CommandType::UKNOWN) {}
@@ -28,8 +28,8 @@ private:
     CommandType Command;
   } commandMessage_;
 
-  void ConvertMessageToCommandMessage();
-  const CommandType GetCommandTypeFromString(const std::string& commandString) const;
+  virtual void ConvertMessageToCommandMessage() = 0;
+  virtual const CommandType GetCommandTypeFromString(const std::string& commandString) const = 0;
 
   std::string initialMessage_;
 };

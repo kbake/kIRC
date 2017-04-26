@@ -2,7 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "IrcMessage.h"
+#include "IrcSendMessage.h"
+#include "IrcReceiveMessage.h"
 
 using namespace std;
 
@@ -196,7 +197,7 @@ void buildMessage(string& recievedMessage, string& tempMessage)
 
 void parseMessage(const string& recievedMessage)
 {
-  IrcMessage message(recievedMessage);
+  IrcReceiveMessage message(recievedMessage);
   std::string toPrint;
 
   switch( message.GetCommandType() )
@@ -235,7 +236,7 @@ int sendMessage(SOCKET& connectedSocket, string& message)
 
 void parseInput(string& input)
 {
-  IrcMessage message(input);
+  IrcSendMessage message(input);
   std::string toSend;
 
   switch( message.GetCommandType() )
